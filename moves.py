@@ -7,4 +7,5 @@ MOVES = {
     "wave_crash": Move("Wave Crash", 9, "damage"),
     # Defense Moves
     "armor_break": Move("Armor Break", "lowers defense", "defense_down"),
+    "harden": Move("Harden", "highers_defense", "defense_up")
 }

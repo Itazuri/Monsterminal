@@ -15,7 +15,8 @@ def create_player():
         defense=7,
         moves=[
             MOVES["fire_bite"],
-            MOVES["armor_break"]
+            MOVES["armor_break"],
+            MOVES["harden"]
         ]
     )
 
@@ -25,6 +26,8 @@ def create_player():
 enemy_templates = [
     ("FlamingFox",  50, 5, 4, ["fire_bite", "tackle"]),
     ("TankyFish", 55, 4, 6, ["water_splash", "wave_crash"]),
+    ("RockHard", 90, 1, 6, ["harden"]),
+
 ]
 
 
@@ -77,7 +80,3 @@ def run_game():
         print("\nYou beat the game!! (for now)")
     else:
         print("\nYou lost!")
-
-
-if __name__ == "__main__":
-    run_game()
