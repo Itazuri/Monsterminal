@@ -74,7 +74,8 @@ def battle(player, enemy):
 
         if not enemy.is_alive():
             print(f"\n{enemy.name} fainted!")
-            print("You win!")
+            player.gain_xp(5)
+            print(f"You win against {enemy.name}!")
             break
 
         # Enemies turn

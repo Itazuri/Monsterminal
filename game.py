@@ -1,6 +1,7 @@
 from battle import battle
 from creature import Creature
 from moves import MOVES
+from rewards import offer_rewards
 import random
 
 
@@ -11,7 +12,7 @@ def create_player():
         "FireKitty",
         hp=60,
         attack=6,
-        defense=5,
+        defense=7,
         moves=[
             MOVES["fire_bite"],
             MOVES["armor_break"]
@@ -22,8 +23,8 @@ def create_player():
 # Enemies
 
 enemy_templates = [
-    ("Flarefox",  50, 5, 4, ["fire_bite", "tackle"]),
-    ("Aquabeast", 55, 4, 6, ["water_splash", "wave_crash"]),
+    ("FlamingFox",  50, 5, 4, ["fire_bite", "tackle"]),
+    ("TankyFish", 55, 4, 6, ["water_splash", "wave_crash"]),
 ]
 
 
@@ -56,21 +57,14 @@ def run_game():
             print("\nYou lost the run.")
             return
 
-        print("\nReward: Rest or continue")
-        choice = input("(r = rest +35 HP, c = continue): ").lower()
-
-        if choice == "r":
-            player.hp = min(player.max_hp, player.hp + 35)
-            player.reset_combat_stats()
-            print("Recovered 35 HP. (Stat stages reset)")
-        # on continue: player stat stages carry over
+        offer_rewards(player)
 
     # 1st Boss
 
     print("\nFINAL BOSS")
 
     boss = Creature(
-        "BossFlare",
+        "TheBoss",
         hp=70,
         attack=8,
         defense=6,
@@ -80,12 +74,10 @@ def run_game():
     battle(player, boss)
 
     if player.is_alive():
-        print("\nYou won Congratulations!!")
+        print("\nYou beat the game!! (for now)")
     else:
         print("\nYou lost!")
 
-
-# Entry point
 
 if __name__ == "__main__":
     run_game()
