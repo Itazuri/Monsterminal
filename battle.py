@@ -18,7 +18,7 @@ def calculate_damage(attacker, defender, move):
 
 def apply_move(user, target, move):
 
-    # ---------- EFFECT SYSTEM ----------
+    # Effect System
     if move.effect == "defense_down":
         target.defense_stage = max(-6, target.defense_stage - 1)
         print(f"\n{target.name}'s defense fell!")
@@ -29,7 +29,7 @@ def apply_move(user, target, move):
         print(f"\n{user.name}'s attack rose!")
         return
 
-    # default = damage
+    # damage
     damage = calculate_damage(user, target, move)
     target.hp -= damage
 
@@ -69,7 +69,7 @@ def battle(player, enemy):
 
         move = player.moves[choice]
 
-        # ---------- PLAYER TURN ----------
+        # Players turn
         apply_move(player, enemy, move)
 
         if not enemy.is_alive():
@@ -77,12 +77,7 @@ def battle(player, enemy):
             print("You win!")
             break
 
-        # ---------- ENEMY TURN ----------
+        # Enemies turn
         enemy_move = random.choice(enemy.moves)
 
         apply_move(enemy, player, enemy_move)
-
-        if not player.is_alive():
-            print(f"\n{player.name} fainted!")
-            print("You lost!")
-            break

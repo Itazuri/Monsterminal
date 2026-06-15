@@ -4,7 +4,7 @@ from moves import MOVES
 import random
 
 
-# ---------- PLAYER ----------
+# Player
 
 def create_player():
     return Creature(
@@ -19,7 +19,7 @@ def create_player():
     )
 
 
-# ---------- ENEMY TEMPLATES ----------
+# Enemies
 
 enemy_templates = [
     ("Flarefox",  50, 5, 4, ["fire_bite", "tackle"]),
@@ -38,15 +38,15 @@ def create_enemy():
     )
 
 
-# ---------- GAME LOOP ----------
+# Game loop
 
 def run_game():
-    print("\n=== NEW RUN STARTED ===\n")
+    print("\nNEW RUN STARTED\n")
 
     player = create_player()
 
     for stage in range(3):
-        print(f"\n--- Stage {stage + 1} ---")
+        print(f"\nStage {stage + 1}")
 
         enemy = create_enemy()
 
@@ -57,15 +57,15 @@ def run_game():
             return
 
         print("\nReward: Rest or continue")
-        choice = input("(r = rest +30 HP, c = continue): ").lower()
+        choice = input("(r = rest +35 HP, c = continue): ").lower()
 
         if choice == "r":
-            player.hp = min(player.max_hp, player.hp + 30)
+            player.hp = min(player.max_hp, player.hp + 35)
             player.reset_combat_stats()
-            print("Recovered 30 HP. (Stat stages reset)")
+            print("Recovered 35 HP. (Stat stages reset)")
         # on continue: player stat stages carry over
 
-    # ---------- BOSS ----------
+    # 1st Boss
 
     print("\nFINAL BOSS")
 
@@ -80,12 +80,12 @@ def run_game():
     battle(player, boss)
 
     if player.is_alive():
-        print("\nYOU WON THE RUN!")
+        print("\nYou won Congratulations!!")
     else:
-        print("\nYOU LOST THE RUN!")
+        print("\nYou lost!")
 
 
-# ---------- ENTRY POINT ----------
+# Entry point
 
 if __name__ == "__main__":
     run_game()

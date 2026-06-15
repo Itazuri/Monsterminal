@@ -7,7 +7,7 @@ class Creature:
         self.defense = defense
         self.moves = moves
 
-        # combat-only stat stages (pokemon-style, -6 to +6)
+        # maximum of +6 or -6
         self.defense_stage = 0
         self.attack_stage = 0
 
