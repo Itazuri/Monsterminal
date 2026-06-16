@@ -29,7 +29,7 @@ def hp_bar(hp, max_hp, length=20):
 
 def print_status(player, enemy):
     print(f"\nlv.{player.level} {player.name:<12} {hp_bar(player.hp, player.max_hp)}")
-    print(f"{enemy.name:<16} {hp_bar(enemy.hp, enemy.max_hp)}")
+    print(f"lv.{enemy.level} {enemy.name:<12} {hp_bar(enemy.hp, enemy.max_hp)}")
 
 
 # show its already maximum

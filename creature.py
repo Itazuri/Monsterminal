@@ -43,3 +43,11 @@ class Creature:
         self.hp = self.max_hp  # heal on level up (might be too op)
 
         print(f"\n{self.name} leveled up to {self.level}!")
+
+    def set_level(self, target_level):
+        while self.level < target_level:
+            self.level += 1
+            self.max_hp += 5
+            self.attack += 1
+        # Sync HP to the new max
+        self.hp = self.max_hp
