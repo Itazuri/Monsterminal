@@ -44,21 +44,21 @@ def apply_move(user, target, move):
 
     if move.effect == "defense_down":
         target.defense_stage = max(-6, target.defense_stage - 1)
-        print(f"\n{target.name}'s defense fell!")
+        print(f"\n{user.name} hit {target.name} with {move.name} and it's defense fell!")
         return
 
     if move.effect == "attack_up":
         user.attack_stage, changed = boost_stat(f"{user.name}'s attack", user.attack_stage)
 
         if changed:
-            print(f"\n{user.name}'s attack rose!")
+            print(f"\n{user.name} used {move.name}! attack rose!")
         return
 
     if move.effect == "defense_up":
         user.defense_stage, changed = boost_stat(f"{user.name}'s defense", user.defense_stage)
 
         if changed:
-            print(f"\n{user.name}'s defense rose!")
+            print(f"\n{user.name} used {move.name}! defense rose!")
         return
 
     damage = calculate_damage(user, target, move)

@@ -257,7 +257,6 @@ def run_game():
 
         if not player.is_alive():
             print(f"\nYou fell to the Act {act} Boss.")
-            print(f"You made it to Act {act}. Well fought.")
             return
         # Act clear
         _offer_act_clear_reward(player, act)
