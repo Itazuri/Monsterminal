@@ -1,4 +1,5 @@
 import random
+from relics import trigger_hook, display_relics
 
 
 def get_stage_multiplier(stage):
@@ -61,6 +62,11 @@ def apply_move(user, target, move):
         return
 
     damage = calculate_damage(user, target, move)
+
+    # relics that modify dmg
+    if hasattr(user, "relics") and user.relics:
+        damage = trigger_hook(user, target, "on_damage_dealt", damage=damage, move=move)
+
     target.hp -= damage
     target.hp = max(0, target.hp)
 
@@ -74,7 +80,12 @@ def battle(player, enemy):
     player.defense_stage = getattr(player, "defense_stage", 0)
     player.attack_stage = getattr(player, "attack_stage", 0)
 
+    # apply relics on battle start
+    if hasattr(player, "relics") and player.relics:
+        trigger_hook(player, enemy, "on_battle_start")
+
     print(f"\nA wild {enemy.name} appeared!")
+    display_relics(player)
 
     while player.is_alive() and enemy.is_alive():
 
@@ -109,8 +120,21 @@ def battle(player, enemy):
             continue
 
         move = player.moves[choice]
+        enemy_move = random.choice(enemy.moves)
 
-        apply_move(player, enemy, move)
+        # Speed check, coinflip on tie
+        if player.speed > enemy.speed or (player.speed == enemy.speed and random.random() < 0.5):
+            first, first_move = player, move
+            second, second_move = enemy, enemy_move
+        else:
+            first, first_move = enemy, enemy_move
+            second, second_move = player, move
+
+        if player.speed != enemy.speed:
+            faster = first.name
+            print(f"\n{faster} is faster and goes first!")
+
+        apply_move(first, second, first_move)
 
         if not enemy.is_alive():
             print(f"\n{enemy.name} fainted!")
@@ -118,8 +142,21 @@ def battle(player, enemy):
             print(f"You win against {enemy.name}!")
             break
 
-        enemy_move = random.choice(enemy.moves)
-        apply_move(enemy, player, enemy_move)
+        if not player.is_alive():
+            print(f"\n{player.name} fainted! You lost!")
+            break
+
+        apply_move(second, first, second_move)
+
+        # End of turn relic effects
+        if hasattr(player, "relics") and player.relics:
+            trigger_hook(player, enemy, "on_turn_end")
+
+        if not enemy.is_alive():
+            print(f"\n{enemy.name} fainted!")
+            player.gain_xp(5)
+            print(f"You win against {enemy.name}!")
+            break
 
         if not player.is_alive():
             print(f"\n{player.name} fainted! You lost!")

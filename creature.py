@@ -1,5 +1,5 @@
 class Creature:
-    def __init__(self, name, hp, attack, defense, moves):
+    def __init__(self, name, hp, attack, defense, moves, speed=5):
         self.name = name
         self.level = 1
         self.xp = 0
@@ -7,11 +7,15 @@ class Creature:
         self.hp = hp
         self.attack = attack
         self.defense = defense
+        self.speed = speed
         self.moves = moves
 
         # maximum of +6 or -6
         self.defense_stage = 0
         self.attack_stage = 0
+
+        # Relics, enemies leave that empty only for player
+        self.relics = []
 
     def is_alive(self):
         return self.hp > 0
