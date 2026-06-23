@@ -19,11 +19,6 @@ REWARD_POOL = [
         "apply": lambda player: setattr(player, "defense", player.defense + 1)
     },
     {
-        "id": "heal",
-        "label": "Heal 35 HP",
-        "apply": lambda player: setattr(player, "hp", min(player.max_hp, player.hp + 35))
-    },
-    {
         "id": "max_hp_up",
         "label": "+5 Max HP (and heal 5)",
         "apply": lambda player: (
@@ -35,11 +30,6 @@ REWARD_POOL = [
 
 # Elite rewards
 ELITE_REWARD_POOL = [
-    {
-        "id": "big_heal",
-        "label": "Heal 60 HP",
-        "apply": lambda player: setattr(player, "hp", min(player.max_hp, player.hp + 60))
-    },
     {
         "id": "atk_up2",
         "label": "+2 Attack (whole run)",
@@ -110,7 +100,7 @@ def offer_elite_rewards(player):
         relic = get_relic(relic_id)
         relic_option = {
             "id": f"relic_{relic_id}",
-            "label": f"Relic: {relic['name']} - {relic['description']}",
+            "label": f"Relic: {relic['name']}, {relic['description']}",
             "apply": lambda p, rid=relic_id: give_relic(p, rid)
         }
         options.append(relic_option)

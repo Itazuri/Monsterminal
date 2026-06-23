@@ -19,61 +19,93 @@ def create_player():
         attack=6,
         defense=7,
         speed=8,
-        moves=[
-            MOVES["fire_bite"],
-            MOVES["armor_break"],
-            MOVES["harden"],
-            MOVES["sharpen"]
+        move_pool=[
+            (1, MOVES["fire_bite"]),
+            (1, MOVES["harden"]),
+            (2, MOVES["sharpen"]),
+            (3, MOVES["armor_break"]),
         ]
     )
 
-# Enemy templates (name, hp, atk, def, speed, move_keys)
+# Enemy templates
+# move_pool entries: (learned_at_level, move_key)
 
 NORMAL_ENEMIES = [
-    ("FlamingFox", 50, 5, 4,  7, ["fire_bite", "tackle"]),
-    ("TankyFish", 55, 4, 6,  4, ["water_splash", "wave_crash"]),
-    ("Rocky", 90, 1, 6,  2, ["harden"]),
-    ("Nany", 10, 20, 3, 10, ["water_splash", "fire_bite"]),
+    ("FlamingFox", 50, 5, 4,  7, [ # hp, atk, def, spd
+        (1, "tackle"),
+        (2, "fire_bite"),
+    ]),
+    ("TankyFish",  55, 4, 6,  4, [
+        (1, "water_splash"),
+        (3, "wave_crash"),
+        (4, "harden"),
+    ]),
+    ("Rocky",      90, 1, 6,  2, [
+        (1, "harden"),
+    ]),
+    ("Nany",       10, 20, 3, 10, [
+        (1, "water_splash"),
+        (2, "fire_bite"),
+    ]),
 ]
 
 ELITE_ENEMIES = [
-    ("Infernum", 75, 8, 5,  8, ["fire_bite", "wave_crash"]),
-    ("SteelCrab", 80, 5, 9,  3, ["harden", "tackle"]),
-    ("DarkShadow", 65, 9, 4, 10, ["fire_bite", "armor_break"]),
-    ("Leviathan", 85, 7, 6,  5, ["wave_crash", "water_splash"]),
+    ("Infernum",   75, 8, 5,  8, [
+        (1, "fire_bite"),
+        (2, "tackle"),
+        (4, "wave_crash"),
+        (5, "armor_break"),
+    ]),
+    ("SteelCrab",  80, 5, 9,  3, [
+        (1, "harden"),
+        (2, "tackle"),
+        (5, "armor_break"),
+    ]),
+    ("DarkShadow", 65, 9, 4, 10, [
+        (1, "fire_bite"),
+        (3, "armor_break"),
+        (5, "sharpen"),
+    ]),
+    ("Leviathan",  85, 7, 6,  5, [
+        (1, "water_splash"),
+        (2, "wave_crash"),
+        (4, "harden"),
+    ]),
 ]
 
 
 def _make_enemy(template):
-    name, hp, atk, def_, spd, move_keys = template
+    name, hp, atk, def_, spd, pool = template
     return Creature(
         name, hp=hp, attack=atk, defense=def_, speed=spd,
-        moves=[MOVES[m] for m in move_keys]
+        move_pool=[(lvl, MOVES[key]) for lvl, key in pool]
     )
 
+
 # Enemy Scaling
-
+ 
 def _enemy_level(act, offset_min, offset_max):
-    return random.randint(act + offset_min, act + offset_max)
-
-
+    base = (act - 1) * 4  # act 1 = 0, act 2 = 4, act 3 = 8, etc.
+    return random.randint(base + offset_min, base + offset_max)
+ 
+ 
 def create_normal_enemy(act=1):
     enemy = _make_enemy(random.choice(NORMAL_ENEMIES))
-    lvl = _enemy_level(act, offset_min=0, offset_max=2)
+    lvl = _enemy_level(act, offset_min=1, offset_max=2)
     if lvl > 1:
         enemy.set_level(lvl)
     return enemy
-
-
+ 
+ 
 def create_elite_enemy(act=1):
     enemy = _make_enemy(random.choice(ELITE_ENEMIES))
-    lvl = _enemy_level(act, offset_min=1, offset_max=3)
+    lvl = _enemy_level(act, offset_min=2, offset_max=3)
     if lvl > 1:
         enemy.set_level(lvl)
     return enemy
-
+ 
 # Bosses
-
+ 
 def _make_boss_the_inferno(act):
     boss = Creature(
         "The Inferno",
@@ -81,14 +113,19 @@ def _make_boss_the_inferno(act):
         attack=9,
         defense=7,
         speed=6,
-        moves=[MOVES["fire_bite"], MOVES["wave_crash"], MOVES["armor_break"]]
+        move_pool=[
+            (1, MOVES["fire_bite"]),
+            (2, MOVES["tackle"]),
+            (3, MOVES["armor_break"]),
+            (5, MOVES["wave_crash"]),
+        ]
     )
-    lvl = _enemy_level(act, offset_min=2, offset_max=4)
+    lvl = _enemy_level(act, offset_min=3, offset_max=4)
     if lvl > 1:
         boss.set_level(lvl)
     return boss
-
-
+ 
+ 
 def _make_boss_crystal_golem(act):
     boss = Creature(
         "Crystal Golem",
@@ -96,15 +133,19 @@ def _make_boss_crystal_golem(act):
         attack=7,
         defense=11,
         speed=3,
-        moves=[MOVES["harden"], MOVES["wave_crash"], MOVES["armor_break"]]
+        move_pool=[
+            (1, MOVES["harden"]),
+            (2, MOVES["tackle"]),
+            (3, MOVES["armor_break"]),
+            (5, MOVES["wave_crash"]),
+        ]
     )
-    lvl = _enemy_level(act, offset_min=2, offset_max=4)
+    lvl = _enemy_level(act, offset_min=3, offset_max=4)
     if lvl > 1:
         boss.set_level(lvl)
     return boss
-
-
-# Bosses in Boss pool
+ 
+ 
 BOSS_POOL = [
     _make_boss_the_inferno,
     _make_boss_crystal_golem,
@@ -125,13 +166,11 @@ def _offer_act_clear_reward(player, act):
 
     options = []
 
-    # Always offer a heal
     options.append({
         "label": "Heal 50 HP",
         "apply": lambda p: setattr(p, "hp", min(p.max_hp, p.hp + 50)),
     })
 
-    # Always offer a relic if one is available, otherwise a stat boost
     relic_id = random_relic_id(player)
     if relic_id:
         relic = get_relic(relic_id)
@@ -145,7 +184,6 @@ def _offer_act_clear_reward(player, act):
             "apply": lambda p: setattr(p, "attack", p.attack + 2),
         })
 
-    # Always offer a permanent stat upgrade
     stat_choice = random.choice(["atk", "def", "max_hp"])
     if stat_choice == "atk":
         options.append({
@@ -186,7 +224,6 @@ def _offer_act_clear_reward(player, act):
 # Path resolution
 
 def resolve_path(path_type, player, stage_num, act):
-
     if path_type == "battle":
         enemy = create_normal_enemy(act)
         battle(player, enemy)
@@ -221,7 +258,7 @@ def print_run_status(player, stage_num, act):
     display_relics(player)
     print(f"{'─'*42}")
 
-# Main run loop - endless acts
+# Main run loop
 
 def run_game():
     print("\nNEW RUN STARTED\n")
@@ -229,24 +266,18 @@ def run_game():
     act = 1
 
     while True:
-
-        # Act intro banner
         print("\n" + "=" * 42)
         print(f"              ACT {act}")
         print("=" * 42)
 
-        # Path stages
         for stage in range(1, NUM_STAGES + 1):
             print_run_status(player, stage, act)
-
             path = choose_path()
             alive = resolve_path(path, player, stage, act)
-
             if not alive:
                 print(f"\nYou fell in Act {act}, Stage {stage}.")
                 return
 
-        # Boss stage
         print("\n" + "=" * 42)
         print(f"         ACT {act} BOSS")
         print("=" * 42)
@@ -259,6 +290,6 @@ def run_game():
             print(f"\nYou fell to the Act {act} Boss.")
             print(f"You made it to Act {act}. Well fought.")
             return
-        # Act clear
+
         _offer_act_clear_reward(player, act)
         act += 1

@@ -1,12 +1,13 @@
 from move import Move
 
 MOVES = {
-    "fire_bite": Move("Fire Bite", 8, "damage"),
-    "tackle": Move("Tackle", 7, "damage"),
-    "water_splash": Move("Water Splash", 7, "damage"),
-    "wave_crash": Move("Wave Crash", 9, "damage"),
+    # Damage Moves
+    "fire_bite":    Move("Fire Bite",    8, effect=None),
+    "tackle":       Move("Tackle",       7, effect=None),
+    "water_splash": Move("Water Splash", 7, effect=None),
+    "wave_crash":   Move("Wave Crash",   9, effect=None),
     # Buff/Debuff Moves
-    "armor_break": Move("Armor Break", "lowers defense", "defense_down"),
-    "harden": Move("Harden", "highers_defense", "defense_up"),
-    "sharpen": Move("Sharpen", "highers_attack", "attack_up")
+    "armor_break":  Move("Armor Break",  0, effect="defense_down"),
+    "harden":       Move("Harden",       0, effect="defense_up"),
+    "sharpen":      Move("Sharpen",      0, effect="attack_up"),
 }
