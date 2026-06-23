@@ -165,12 +165,7 @@ def _offer_act_clear_reward(player, act):
     print("Choose your reward:\n")
 
     options = []
-
-    options.append({
-        "label": "Heal 50 HP",
-        "apply": lambda p: setattr(p, "hp", min(p.max_hp, p.hp + 50)),
-    })
-
+    
     relic_id = random_relic_id(player)
     if relic_id:
         relic = get_relic(relic_id)
