@@ -41,7 +41,7 @@ def boost_stat(entity, attr):
 def apply_move(user, target, move):
     if move.effect == "defense_down":
         target.defense_stage = max(-6, target.defense_stage - 1)
-        print(f"\n{target.name}'s defense fell!")
+        print(f"\n{user.name} hit {target.name} with {move.name} and it's defense fell!")
         return
 
     if move.effect == "attack_up":
