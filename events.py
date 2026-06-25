@@ -1,17 +1,22 @@
 import random
 from relics import give_relic, random_relic_id
 
-
-# ── Individual events ─────────────────────────────────────────────────────────
+def _heal(player, fraction, label=None):
+    amount = max(1, int(player.max_hp * fraction))
+    gained = min(amount, player.max_hp - player.hp)
+    player.hp += gained
+    if label:
+        print(f"\n{label} Healed {gained} HP. ({player.hp}/{player.max_hp})")
+    return gained
 
 def event_strange_shrine(player):
-    """Gain stats or sacrifice HP for a relic."""
     print("\n╔══════════════════════════════╗")
     print("║      STRANGE SHRINE          ║")
     print("╚══════════════════════════════╝")
     print("A glowing shrine pulses with energy.")
     print("  1. Pray (gain +1 ATK and +1 DEF - safe)")
-    print("  2. Offer blood (sacrifice 20 HP for a random relic)")
+    cost = max(5, int(player.max_hp * 0.20))
+    print(f"  2. Offer blood (sacrifice {cost} HP for a random relic)")
 
     choice = _prompt_choice(2)
     if choice == 1:
@@ -19,10 +24,10 @@ def event_strange_shrine(player):
         player.defense += 1
         print(f"\nThe shrine blesses you. ATK and DEF each +1.")
     else:
-        if player.hp <= 20:
+        if player.hp <= cost:
             print("\nYou're too weak to survive the offering. You step back.")
             return
-        player.hp -= 20
+        player.hp -= cost
         print(f"\nYou bleed on the altar. ({player.hp}/{player.max_hp} HP)")
         relic_id = random_relic_id(player)
         if relic_id:
@@ -36,24 +41,27 @@ def event_merchant(player):
     print("║         MERCHANT             ║")
     print("╚══════════════════════════════╝")
     print("A hooded merchant eyes you carefully.")
-    print("  1. Buy healing potion (costs 10 HP → restore 40 HP)")
-    print("  2. Buy a random relic (costs 25 HP)")
-    print("  3. Leave")
+    potion_cost = max(3, int(player.max_hp * 0.10))
+    potion_heal = int(player.max_hp * 0.40)
+    relic_cost  = max(8, int(player.max_hp * 0.25))
+    print(f" 1. Buy healing potion (costs {potion_cost} HP → restore {potion_heal} HP)")
+    print(f" 2. Buy a random relic (costs {relic_cost} HP)")
+    print(" 3. Leave")
 
     choice = _prompt_choice(3)
     if choice == 1:
-        if player.hp <= 10:
-            print("\nYou can't afford that - not enough HP.")
+        if player.hp <= potion_cost:
+            print("\nYou can't afford that, not enough HP.")
         else:
-            player.hp -= 10
-            gained = min(40, player.max_hp - player.hp)
+            player.hp -= potion_cost
+            gained = min(potion_heal, player.max_hp - player.hp)
             player.hp += gained
             print(f"\nYou drink the potion and recover {gained} HP. ({player.hp}/{player.max_hp})")
     elif choice == 2:
-        if player.hp <= 25:
-            print("\nYou can't afford that - not enough HP.")
+        if player.hp <= relic_cost:
+            print("\nYou can't afford that, not enough HP.")
         else:
-            player.hp -= 25
+            player.hp -= relic_cost
             print(f"\nYou pay the merchant. ({player.hp}/{player.max_hp} HP)")
             relic_id = random_relic_id(player)
             if relic_id:
@@ -69,18 +77,18 @@ def event_ancient_fountain(player):
     print("║      ANCIENT FOUNTAIN        ║")
     print("╚══════════════════════════════╝")
     print("Crystal-clear water bubbles up from ancient stone.")
-    print("  1. Drink (heal 30 HP)")
-    print("  2. Bathe  (gain +10 Max HP, heal 10 HP)")
+    drink_heal = int(player.max_hp * 0.35)
+    bathe_bonus = max(4, int(player.max_hp * 0.10))
+    print(f"  1. Drink (heal {drink_heal} HP)")
+    print(f"  2. Bathe  (gain +{bathe_bonus} Max HP, heal {bathe_bonus} HP)")
 
     choice = _prompt_choice(2)
     if choice == 1:
-        gained = min(30, player.max_hp - player.hp)
-        player.hp += gained
-        print(f"\nYou feel refreshed. Healed {gained} HP. ({player.hp}/{player.max_hp})")
+        _heal(player, 0.35, "You feel refreshed.")
     else:
-        player.max_hp += 10
-        player.hp = min(player.max_hp, player.hp + 10)
-        print(f"\nYou feel stronger. Max HP +10. ({player.hp}/{player.max_hp})")
+        player.max_hp += bathe_bonus
+        player.hp = min(player.max_hp, player.hp + bathe_bonus)
+        print(f"\nYou feel stronger. Max HP +{bathe_bonus}. ({player.hp}/{player.max_hp})")
 
 
 def event_treasure_chest(player):
@@ -92,9 +100,7 @@ def event_treasure_chest(player):
 
     roll = random.random()
     if roll < 0.35:
-        gained = min(40, player.max_hp - player.hp)
-        player.hp += gained
-        print(f"\nA healing vial! Restored {gained} HP. ({player.hp}/{player.max_hp})")
+        _heal(player, 0.40, "A healing vial!")
     elif roll < 0.60:
         player.attack += 1
         print(f"\nA worn blade. Your attack permanently +1.")
@@ -107,9 +113,10 @@ def event_treasure_chest(player):
             print("\nA relic gleams inside!")
             give_relic(player, relic_id)
         else:
-            player.max_hp += 5
-            player.hp = min(player.max_hp, player.hp + 5)
-            print("\nA peculiar gem. Max HP +5.")
+            bonus = max(3, int(player.max_hp * 0.08))
+            player.max_hp += bonus
+            player.hp = min(player.max_hp, player.hp + bonus)
+            print(f"\nA peculiar gem. Max HP +{bonus}.")
 
 
 def event_cursed_altar(player):
@@ -117,8 +124,10 @@ def event_cursed_altar(player):
     print("║       CURSED ALTAR           ║")
     print("╚══════════════════════════════╝")
     print("Dark energy radiates from a cracked obsidian altar.")
-    print("  1. Gamble (50% chance: relic + 10 HP | 50% chance: lose 30 HP)")
-    print("  2. Walk away (nothing happens)")
+    lose_hp  = max(5, int(player.max_hp * 0.30))
+    gain_hp  = max(3, int(player.max_hp * 0.10))
+    print(f" 1. Gamble (50%: relic + {gain_hp} HP | 50%: lose {lose_hp} HP)")
+    print(" 2. Walk away (nothing happens)")
 
     choice = _prompt_choice(2)
     if choice == 2:
@@ -130,10 +139,10 @@ def event_cursed_altar(player):
         relic_id = random_relic_id(player)
         if relic_id:
             give_relic(player, relic_id)
-        player.hp = min(player.max_hp, player.hp + 10)
-        print(f"Healed 10 HP. ({player.hp}/{player.max_hp})")
+        player.hp = min(player.max_hp, player.hp + gain_hp)
+        print(f"Healed {gain_hp} HP. ({player.hp}/{player.max_hp})")
     else:
-        damage = min(30, player.hp - 1)  # can't kill with this alone
+        damage = min(lose_hp, player.hp - 1)  # can't kill
         player.hp -= damage
         print(f"\nThe altar rejects you! Lost {damage} HP. ({player.hp}/{player.max_hp})")
 
@@ -143,9 +152,8 @@ def event_wandering_healer(player):
     print("║     WANDERING HEALER         ║")
     print("╚══════════════════════════════╝")
     print("A kind stranger patches your wounds.")
-    gained = min(25, player.max_hp - player.hp)
-    player.hp += gained
-    print(f"\nHealed {gained} HP. ({player.hp}/{player.max_hp})")
+    _heal(player, 0.30, "")
+    print(f"({player.hp}/{player.max_hp})")
 
 
 def event_old_library(player):
@@ -153,9 +161,10 @@ def event_old_library(player):
     print("║        OLD LIBRARY           ║")
     print("╚══════════════════════════════╝")
     print("You find a tome of ancient battle techniques.")
+    vit_bonus = max(4, int(player.max_hp * 0.10))
     print("  1. Study offense (+2 ATK)")
     print("  2. Study defense (+2 DEF)")
-    print("  3. Study vitality (+8 Max HP, heal 8)")
+    print(f"  3. Study vitality (+{vit_bonus} Max HP, heal {vit_bonus})")
 
     choice = _prompt_choice(3)
     if choice == 1:
@@ -165,12 +174,9 @@ def event_old_library(player):
         player.defense += 2
         print(f"\nYou learn to absorb blows. DEF +2.")
     else:
-        player.max_hp += 8
-        player.hp = min(player.max_hp, player.hp + 8)
-        print(f"\nYour body hardens. Max HP +8. ({player.hp}/{player.max_hp})")
-
-
-# Event pool
+        player.max_hp += vit_bonus
+        player.hp = min(player.max_hp, player.hp + vit_bonus)
+        print(f"\nYour body hardens. Max HP +{vit_bonus}. ({player.hp}/{player.max_hp})")
 
 EVENT_POOL = [
     event_strange_shrine,

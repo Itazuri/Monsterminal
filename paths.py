@@ -74,30 +74,47 @@ def choose_path():
 # Campfire logic
 
 def do_campfire(player):
-    """Campfire node: heal + optional bonus choice."""
+    """Campfire node: choose between healing OR a stat bonus — not both."""
     print("\n╔══════════════════════════════╗")
     print("║          CAMPFIRE            ║")
     print("╚══════════════════════════════╝")
-    print("You sit by a warm fire and catch your breath.")
+    print("You sit by a warm fire. You can only focus on one thing tonight.\n")
 
-    # Base heal
-    base_heal = int(player.max_hp * 0.30)
-    gained = min(base_heal, player.max_hp - player.hp)
-    player.hp += gained
-    print(f"\nRestored {gained} HP. ({player.hp}/{player.max_hp})")
+    heal_amount = max(1, int(player.max_hp * 0.35))
+    max_hp_bonus = max(3, int(player.max_hp * 0.10))
 
-    # Optional bonus (50% chance)
-    if random.random() < 0.5:
-        bonus = random.choice(["atk", "def", "max_hp"])
-        if bonus == "atk":
-            player.attack += 1
-            print("A traveler's note boosts your technique. ATK +1.")
-        elif bonus == "def":
-            player.defense += 1
-            print("You sharpen your guard by the fire. DEF +1.")
-        else:
-            player.max_hp += 5
-            player.hp = min(player.max_hp, player.hp + 5)
-            print("The rest does wonders. Max HP +5.")
+    bonus_type = random.choice(["atk", "def", "max_hp"])
+    if bonus_type == "atk":
+        bonus_label = "Study (+1 ATK)"
+    elif bonus_type == "def":
+        bonus_label = "Train (+1 DEF)"
     else:
-        print("The fire crackles quietly. No bonus tonight.")
+        bonus_label = f"Meditate (+{max_hp_bonus} Max HP)"
+
+    print(f"  1. Rest    (heal {heal_amount} HP)")
+    print(f"  2. {bonus_label}")
+
+    while True:
+        try:
+            choice = int(input("> "))
+            if choice in (1, 2):
+                break
+            print("Enter 1 or 2.")
+        except ValueError:
+            print("Invalid input.")
+
+    if choice == 1:
+        gained = min(heal_amount, player.max_hp - player.hp)
+        player.hp += gained
+        print(f"\nYou sleep soundly. Restored {gained} HP. ({player.hp}/{player.max_hp})")
+    else:
+        if bonus_type == "atk":
+            player.attack += 1
+            print("\nYour strikes grow sharper by morning. ATK +1.")
+        elif bonus_type == "def":
+            player.defense += 1
+            print("\nYou drill your guard through the night. DEF +1.")
+        else:
+            player.max_hp += max_hp_bonus
+            player.hp = min(player.max_hp, player.hp + max_hp_bonus)
+            print(f"\nDeep focus hardens your body. Max HP +{max_hp_bonus}. ({player.hp}/{player.max_hp})")
