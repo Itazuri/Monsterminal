@@ -24,9 +24,19 @@ def hp_bar(hp, max_hp, length=20):
     return f"[{'█' * filled}{'░' * (length - filled)}] {hp}/{max_hp} HP"
 
 
-def print_status(player, enemy):
-    for c in (player, enemy):
-        print(f"lv.{c.level} {c.name:<12} {hp_bar(c.hp, c.max_hp)}")
+def print_status(team, enemy):
+    active = team.active
+    print(f"lv.{active.level} {active.name:<12} {hp_bar(active.hp, active.max_hp)}")
+    print(f"lv.{enemy.level} {enemy.name:<12} {hp_bar(enemy.hp, enemy.max_hp)}")
+
+    bench = [m for i, m in enumerate(team.members) if i != team.active_index]
+    if bench:
+        bench_str = "  |  ".join(
+            f"{m.name} lv.{m.level} ({m.hp}/{m.max_hp} HP)"
+            + ("" if m.is_alive() else " [fainted]")
+            for m in bench
+        )
+        print(f"  Bench: {bench_str}")
 
 
 def boost_stat(entity, attr):
@@ -58,40 +68,116 @@ def apply_move(user, target, move):
     print(f"\n{user.name} used {move.name}! {target.name} took {damage} damage.")
 
 
-def check_fainted(player, enemy):
+def show_team_status(team):
+    print("\nYour team:")
+    for i, m in enumerate(team.members):
+        tag = " (active)" if i == team.active_index else ""
+        status = "" if m.is_alive() else " [fainted]"
+        print(f"  {i + 1}. lv.{m.level} {m.name}{tag}{status} {hp_bar(m.hp, m.max_hp)}")
+
+
+def prompt_switch(team, forced=False):
+    show_team_status(team)
+    if not forced:
+        print("  0. Cancel")
+
+    while True:
+        raw = input("> ").strip()
+        try:
+            choice = int(raw)
+        except ValueError:
+            print("Invalid input.")
+            continue
+
+        if choice == 0 and not forced:
+            return False
+
+        idx = choice - 1
+        if not (0 <= idx < len(team.members)):
+            print("Invalid choice.")
+            continue
+        if idx == team.active_index:
+            print("That monster is already active.")
+            continue
+        if not team.members[idx].is_alive():
+            print("That monster has fainted and can't fight.")
+            continue
+
+        team.switch_to(idx)
+        print(f"\nGo, {team.active.name}!")
+        return True
+
+
+def team_level_up(team):
+    print("\nYour whole team gains experience!")
+    team.level_up_all()
+
+
+def check_fainted(team, enemy):
     if not enemy.is_alive():
         print(f"\n{enemy.name} fainted!")
-        player.level_up()  # Stat gains + new move if learnable
+        team_level_up(team)
         print(f"You win against {enemy.name}!")
         return True
-    if not player.is_alive():
-        print(f"\n{player.name} fainted! You lost!")
-        return True
+
+    if not team.active.is_alive():
+        print(f"\n{team.active.name} fainted!")
+        if not team.is_alive():
+            print("All your monsters have fainted! You lost!")
+            return True
+        print("Choose your next monster:")
+        prompt_switch(team, forced=True)
+
     return False
 
 
-def battle(player, enemy):
+def battle(team, enemy):
     enemy.defense_stage = enemy.attack_stage = 0
-    player.defense_stage = getattr(player, "defense_stage", 0)
-    player.attack_stage  = getattr(player, "attack_stage",  0)
+    for member in team.members:
+        member.defense_stage = getattr(member, "defense_stage", 0)
+        member.attack_stage  = getattr(member, "attack_stage",  0)
 
-    if getattr(player, "relics", None):
-        trigger_hook(player, enemy, "on_battle_start")
+    if getattr(team.active, "relics", None):
+        trigger_hook(team.active, enemy, "on_battle_start")
 
     print(f"\nA wild {enemy.name} appeared!")
-    display_relics(player)
+    display_relics(team.active)
 
-    while player.is_alive() and enemy.is_alive():
+    while team.is_alive() and enemy.is_alive():
+        player = team.active
         print("\n" + "-" * 40)
-        print_status(player, enemy)
-        print("-" * 40 + "\nChoose a move:")
+        print_status(team, enemy)
+        print("-" * 40 + "\nChoose a move (or 'S' to switch monster):")
 
         for i, move in enumerate(player.moves, start=1):
             label = MOVE_LABELS.get(move.effect, f"(power: {move.power})")
             print(f"  {i}. {move.name} {label}")
+        print("  S. Switch monster")
+
+        raw = input("> ").strip()
+
+        if raw.lower() == "s":
+            if len(team.members) == 1:
+                print("\nYou don't have any other monsters to switch to!")
+                continue
+            switched = prompt_switch(team)
+            if not switched:
+                continue
+
+            # When switch enemy deals dmg (lose turn)
+            new_player = team.active
+            enemy_move = random.choice(enemy.moves)
+            apply_move(enemy, new_player, enemy_move)
+            if check_fainted(team, enemy):
+                break
+            if getattr(team.active, "relics", None):
+                trigger_hook(team.active, enemy, "on_turn_end")
+            if check_fainted(team, enemy):
+                break
+            continue
 
         try:
-            choice = int(input("> ")) - 1
+            choice = int(raw) - 1
         except ValueError:
             print("Invalid input!")
             continue
@@ -116,13 +202,14 @@ def battle(player, enemy):
             print(f"\n{first.name} is faster and goes first!")
 
         apply_move(first, second, first_move)
-        if check_fainted(player, enemy):
+        if check_fainted(team, enemy):
             break
 
-        apply_move(second, first, second_move)
+        if second.is_alive():
+            apply_move(second, first, second_move)
 
-        if getattr(player, "relics", None):
-            trigger_hook(player, enemy, "on_turn_end")
+        if getattr(team.active, "relics", None):
+            trigger_hook(team.active, enemy, "on_turn_end")
 
-        if check_fainted(player, enemy):
+        if check_fainted(team, enemy):
             break

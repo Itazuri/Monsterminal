@@ -1,5 +1,8 @@
 import random
 from relics import give_relic, random_relic_id
+from monsters import make_random_findable_monster
+from team import MAX_TEAM_SIZE
+
 
 def _heal(player, fraction, label=None):
     amount = max(1, int(player.max_hp * fraction))
@@ -9,7 +12,9 @@ def _heal(player, fraction, label=None):
         print(f"\n{label} Healed {gained} HP. ({player.hp}/{player.max_hp})")
     return gained
 
-def event_strange_shrine(player):
+
+def event_strange_shrine(team):
+    player = team.active
     print("\n╔══════════════════════════════╗")
     print("║      STRANGE SHRINE          ║")
     print("╚══════════════════════════════╝")
@@ -36,7 +41,8 @@ def event_strange_shrine(player):
             print("The shrine has nothing left to give.")
 
 
-def event_merchant(player):
+def event_merchant(team):
+    player = team.active
     print("\n╔══════════════════════════════╗")
     print("║         MERCHANT             ║")
     print("╚══════════════════════════════╝")
@@ -72,7 +78,8 @@ def event_merchant(player):
         print("\nYou walk away.")
 
 
-def event_ancient_fountain(player):
+def event_ancient_fountain(team):
+    player = team.active
     print("\n╔══════════════════════════════╗")
     print("║      ANCIENT FOUNTAIN        ║")
     print("╚══════════════════════════════╝")
@@ -91,7 +98,8 @@ def event_ancient_fountain(player):
         print(f"\nYou feel stronger. Max HP +{bathe_bonus}. ({player.hp}/{player.max_hp})")
 
 
-def event_treasure_chest(player):
+def event_treasure_chest(team):
+    player = team.active
     print("\n╔══════════════════════════════╗")
     print("║       TREASURE CHEST         ║")
     print("╚══════════════════════════════╝")
@@ -119,7 +127,8 @@ def event_treasure_chest(player):
             print(f"\nA peculiar gem. Max HP +{bonus}.")
 
 
-def event_cursed_altar(player):
+def event_cursed_altar(team):
+    player = team.active
     print("\n╔══════════════════════════════╗")
     print("║       CURSED ALTAR           ║")
     print("╚══════════════════════════════╝")
@@ -147,7 +156,8 @@ def event_cursed_altar(player):
         print(f"\nThe altar rejects you! Lost {damage} HP. ({player.hp}/{player.max_hp})")
 
 
-def event_wandering_healer(player):
+def event_wandering_healer(team):
+    player = team.active
     print("\n╔══════════════════════════════╗")
     print("║     WANDERING HEALER         ║")
     print("╚══════════════════════════════╝")
@@ -156,7 +166,8 @@ def event_wandering_healer(player):
     print(f"({player.hp}/{player.max_hp})")
 
 
-def event_old_library(player):
+def event_old_library(team):
+    player = team.active
     print("\n╔══════════════════════════════╗")
     print("║        OLD LIBRARY           ║")
     print("╚══════════════════════════════╝")
@@ -178,6 +189,51 @@ def event_old_library(player):
         player.hp = min(player.max_hp, player.hp + vit_bonus)
         print(f"\nYour body hardens. Max HP +{vit_bonus}. ({player.hp}/{player.max_hp})")
 
+
+def event_new_monster(team):
+    print("\n╔══════════════════════════════╗")
+    print("║        NEW MONSTER           ║")
+    print("╚══════════════════════════════╝")
+    print("You hear rustling in the bushes nearby...")
+    input("Press Enter to investigate...")
+
+    new_creature = make_random_findable_monster()
+    print(f"\nA wild {new_creature.name} appears, friendly and curious!")
+
+    if team.add_member(new_creature):
+        print(f"{new_creature.name} joins your team at level 1!")
+        return
+
+    print(f"\nYour team is already full ({MAX_TEAM_SIZE}/{MAX_TEAM_SIZE}).")
+    print("Release one of your monsters to make room, or let it go:\n")
+    for i, m in enumerate(team.members):
+        tag = " (active)" if i == team.active_index else ""
+        print(f"  {i + 1}. lv.{m.level} {m.name}{tag}")
+    print("  0. Don't take the new monster")
+
+    while True:
+        try:
+            choice = int(input("> "))
+        except ValueError:
+            print("Invalid input.")
+            continue
+
+        if choice == 0:
+            print(f"\nYou leave {new_creature.name} behind.")
+            return
+
+        idx = choice - 1
+        if 0 <= idx < len(team.members):
+            old = team.replace_member(idx, new_creature)
+            print(
+                f"\n{old.name} was released. "
+                f"{new_creature.name} joins the team at level {new_creature.level}!"
+            )
+            return
+
+        print(f"Pick 0-{len(team.members)}.")
+
+
 EVENT_POOL = [
     event_strange_shrine,
     event_merchant,
@@ -186,11 +242,14 @@ EVENT_POOL = [
     event_cursed_altar,
     event_wandering_healer,
     event_old_library,
+    event_new_monster,
 ]
 
-def run_event(player):
+
+def run_event(team):
     event_fn = random.choice(EVENT_POOL)
-    event_fn(player)
+    event_fn(team)
+
 
 def _prompt_choice(max_choice):
     while True:

@@ -1,16 +1,19 @@
 import random
 from battle import battle
 from creature import Creature
+from team import Team
 from moves import MOVES
 from rewards import offer_rewards, offer_elite_rewards
 from relics import give_relic, display_relics, random_relic_id, get_relic
 from events import run_event
 from paths import choose_path, do_campfire
+from monsters import make_normal_enemy, make_elite_enemy
 
 
 NUM_STAGES = 3   # Number of path nodes per act before the boss
 
-def create_player():
+
+def create_starter():
     return Creature(
         "FireKitty",
         hp=80,
@@ -26,79 +29,18 @@ def create_player():
         ]
     )
 
-NORMAL_ENEMIES = [
-    #  name          hp   atk  def  spd
-    ("FlamingFox", 65, 7, 5, 9 [
-        (1,  "tackle"),
-        (2,  "fire_bite"),
-        (10, "fire_storm"),
-    ]),
-    ("TankyFish", 75, 5, 8, 4 [
-        (1,  "water_splash"),
-        (3,  "wave_crash"),
-        (4,  "harden"),
-    ]),
-    ("Rocky", 100, 4, 8, 2 [
-        (1,  "harden"),
-    ]),
-    ("Nany", 30, 14, 3, 12 [
-        (1,  "water_splash"),
-        (2,  "fire_bite"),
-    ]),
-]
 
-ELITE_ENEMIES = [
-    ("Infernum", 90, 10, 6, 9 [
-        (1,  "fire_bite"),
-        (2,  "tackle"),
-        (4,  "wave_crash"),
-        (5,  "armor_break"),
-        (14, "fire_storm"),
-    ]),
-    ("SteelCrab", 95, 6, 12, 3 [
-        (1,  "harden"),
-        (2,  "tackle"),
-        (5,  "armor_break"),
-    ]),
-    ("DarkShadow", 80, 11, 5, 11 [
-        (1,  "fire_bite"),
-        (3,  "armor_break"),
-        (5,  "sharpen"),
-    ]),
-    ("Leviathan", 100, 9, 7, 5 [
-        (1,  "water_splash"),
-        (2,  "wave_crash"),
-        (4,  "harden"),
-    ]),
-]
-
-
-def _make_enemy(template):
-    name, hp, atk, def_, spd, pool = template
-    return Creature(
-        name, hp=hp, attack=atk, defense=def_, speed=spd,
-        move_pool=[(lvl, MOVES[key]) for lvl, key in pool]
-    )
-
-def _enemy_level(act, offset_min, offset_max):
-    base = (act - 1) * 4
-    return random.randint(base + offset_min, base + offset_max)
+def create_player_team():
+    return Team(create_starter())
 
 
 def create_normal_enemy(act=1):
-    enemy = _make_enemy(random.choice(NORMAL_ENEMIES))
-    lvl = _enemy_level(act, offset_min=1, offset_max=3)
-    if lvl > 1:
-        enemy.set_level(lvl)
-    return enemy
+    return make_normal_enemy(act)
 
 
 def create_elite_enemy(act=1):
-    enemy = _make_enemy(random.choice(ELITE_ENEMIES))
-    lvl = _enemy_level(act, offset_min=3, offset_max=5)
-    if lvl > 1:
-        enemy.set_level(lvl)
-    return enemy
+    return make_elite_enemy(act)
+
 
 def _make_boss_the_inferno(act):
     boss = Creature(
@@ -114,7 +56,7 @@ def _make_boss_the_inferno(act):
             (17, MOVES["fire_storm"]),
         ]
     )
-    lvl = _enemy_level(act, offset_min=4, offset_max=5)
+    lvl = random.randint((act - 1) * 4 + 4, (act - 1) * 4 + 5)
     if lvl > 1:
         boss.set_level(lvl)
     return boss
@@ -134,7 +76,7 @@ def _make_boss_crystal_golem(act):
             (5,  MOVES["wave_crash"]),
         ]
     )
-    lvl = _enemy_level(act, offset_min=4, offset_max=5)
+    lvl = random.randint((act - 1) * 4 + 4, (act - 1) * 4 + 5)
     if lvl > 1:
         boss.set_level(lvl)
     return boss
@@ -150,7 +92,9 @@ def create_boss(act=1):
     make_fn = random.choice(BOSS_POOL)
     return make_fn(act)
 
-def _offer_act_clear_reward(player, act):
+
+def _offer_act_clear_reward(team, act):
+    player = team.active
     print("\n" + "=" * 42)
     print(f"           ACT {act} CLEARED")
     print("=" * 42)
@@ -208,42 +152,52 @@ def _offer_act_clear_reward(player, act):
     player.reset_combat_stats()
     print(f"\nYou chose: {options[choice]['label']}")
 
-def resolve_path(path_type, player, stage_num, act):
+
+def resolve_path(path_type, team, stage_num, act):
     if path_type == "battle":
         enemy = create_normal_enemy(act)
-        battle(player, enemy)
-        if not player.is_alive():
+        battle(team, enemy)
+        if not team.is_alive():
             return False
-        offer_rewards(player)
+        offer_rewards(team.active)
 
     elif path_type == "elite":
         print("\n! An elite enemy blocks your path!")
         enemy = create_elite_enemy(act)
-        battle(player, enemy)
-        if not player.is_alive():
+        battle(team, enemy)
+        if not team.is_alive():
             return False
-        offer_elite_rewards(player)
+        offer_elite_rewards(team.active)
 
     elif path_type == "campfire":
-        do_campfire(player)
+        do_campfire(team.active)
 
     elif path_type == "mystery":
-        run_event(player)
+        run_event(team)
 
     return True
 
-def print_run_status(player, stage_num, act):
+
+def print_run_status(team, stage_num, act):
+    player = team.active
     print(f"\n{'─'*42}")
     print(f"  Act {act}  |  Stage {stage_num}/{NUM_STAGES}  |  "
           f"lv.{player.level} {player.name}")
     print(f"  HP {player.hp}/{player.max_hp}  |  "
           f"ATK {player.attack}  DEF {player.defense}  SPD {player.speed}")
+
+    bench = [m for i, m in enumerate(team.members) if i != team.active_index]
+    if bench:
+        bench_str = "  |  ".join(f"lv.{m.level} {m.name} ({m.hp}/{m.max_hp} HP)" for m in bench)
+        print(f"  Team: {bench_str}")
+
     display_relics(player)
     print(f"{'─'*42}")
 
+
 def run_game():
     print("\nNEW RUN STARTED\n")
-    player = create_player()
+    team = create_player_team()
     act = 1
 
     while True:
@@ -252,9 +206,9 @@ def run_game():
         print("=" * 42)
 
         for stage in range(1, NUM_STAGES + 1):
-            print_run_status(player, stage, act)
+            print_run_status(team, stage, act)
             path = choose_path()
-            alive = resolve_path(path, player, stage, act)
+            alive = resolve_path(path, team, stage, act)
             if not alive:
                 print(f"\nYou fell in Act {act}, Stage {stage}.")
                 return
@@ -262,14 +216,14 @@ def run_game():
         print("\n" + "=" * 42)
         print(f"         ACT {act} BOSS")
         print("=" * 42)
-        print_run_status(player, "BOSS", act)
+        print_run_status(team, "BOSS", act)
 
         boss = create_boss(act)
-        battle(player, boss)
+        battle(team, boss)
 
-        if not player.is_alive():
+        if not team.is_alive():
             print(f"\nYou fell to the Act {act} Boss.")
             return
 
-        _offer_act_clear_reward(player, act)
+        _offer_act_clear_reward(team, act)
         act += 1
