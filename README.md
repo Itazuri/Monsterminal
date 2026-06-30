@@ -10,9 +10,9 @@ Each act has 3 stages followed by a boss. At each stage you choose a path — ba
 
 Each turn you pick one of your creature's active moves. Move order is decided by speed, with a coinflip on ties. Moves can deal damage or apply stat changes:
 
-- **Damage moves** — scale with your attack vs the enemy's defense
-- **Defense down** — lowers the enemy's defense stage
-- **Attack up / Defense up** — raises your own stats temporarily
+- **Damage moves** scale with your attack vs the enemy's defense
+- **Defense down** lowers the enemy's defense stage
+- **Attack up / Defense up** raises your own stats temporarily
 
 Stat stages reset between battles (unless you skip the heal at a campfire).
 
@@ -28,6 +28,10 @@ Enemies scale with the act. Each act you gain 4 levels (3 fights + 1 boss), and 
 ### Relics
 
 Relics are passive items that modify combat in various ways. You can earn them from elite fights and act-clear rewards.
+
+### Team System
+
+Chance to get a new Monster on Mystery Event, Monster starts at lvl 1, levels passively even when not used. Maximum of 3 Monsters in team. Can replace Monsters.
 
 ## Status
 
