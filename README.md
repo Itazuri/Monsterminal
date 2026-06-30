@@ -36,3 +36,7 @@ Chance to get a new Monster on Mystery Event, Monster starts at lvl 1, levels pa
 ## Status
 
 Early development. Planned additions include more creatures, moves, relics, events, and paths.
+
+## Known Bugs
+
+Monster faints, but "revives" due to level up giving 5 hp.
